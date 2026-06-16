@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#4f6ef7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Flashcards">
+  <title>Flashcards</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" href="/static/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- Mobile sidebar overlay -->
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <h1>Flashcards</h1>
+    <button class="icon-btn" id="settings-btn" title="Settings">⚙</button>
+  </div>
+  <div class="sidebar-actions">
+    <button class="btn-study-all" id="sidebar-study-all">▶ Study All</button>
+    <button class="btn-weak-spots" id="sidebar-weak-spots">⚠ Weak Spots</button>
+  </div>
+  <div id="vault-tree">
+    <div class="tree-loading">Loading vault…</div>
+  </div>
+</aside>
+
+<!-- ── Main ─────────────────────────────────────────────────────────── -->
+<main id="main">
+  <!-- Content rendered by app.js -->
+</main>
+
+<!-- Mobile menu button (injected on small screens via CSS) -->
+<button id="menu-btn" class="icon-btn" style="display:none;position:fixed;bottom:1rem;right:1rem;z-index:60;background:var(--accent);color:#fff;width:48px;height:48px;border-radius:50%;box-shadow:var(--shadow-lg);font-size:1.3rem">☰</button>
+
+<!-- ── Settings modal ────────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="settings-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Settings</h3>
+      <button class="modal-close" id="close-settings">✕</button>
+    </div>
+
+    <div class="settings-group">
+      <label>Obsidian vault path</label>
+      <div class="path-input-row">
+        <input type="text" id="vault-path-input" placeholder="/path/to/your/ObsidianVault">
+        <button class="btn btn-secondary btn-sm" id="browse-vault-btn">Browse…</button>
+      </div>
+      <div style="margin-top:.4rem">
+        <button class="btn btn-ghost btn-sm" id="test-path-btn">Test path</button>
+      </div>
+      <div class="hint" id="vault-path-status">Absolute path to your Obsidian vault folder.</div>
+    </div>
+
+    <div class="settings-group">
+      <label>AI provider</label>
+      <select id="provider-select" style="width:100%;padding:.5rem .75rem;border-radius:var(--radius-sm);background:var(--bg2);border:1px solid var(--border);color:var(--text);font:inherit">
+        <option value="anthropic">Anthropic (Claude)</option>
+        <option value="openai">OpenAI (GPT-4o)</option>
+      </select>
+      <div class="hint">Provider used when generating and explaining cards.</div>
+    </div>
+
+    <div class="settings-group">
+      <label>Anthropic API key</label>
+      <input type="password" id="api-key-anthropic" placeholder="sk-ant-… (leave blank to keep current)">
+      <div class="hint" id="api-key-status-anthropic">Not set</div>
+    </div>
+
+    <div class="settings-group">
+      <label>OpenAI API key</label>
+      <input type="password" id="api-key-openai" placeholder="sk-… (leave blank to keep current)">
+      <div class="hint" id="api-key-status-openai">Not set</div>
+    </div>
+
+    <div class="settings-group">
+      <div class="toggle-row">
+        <label class="toggle">
+          <input type="checkbox" id="theme-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+        <span>Dark mode</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="close-settings-footer">Cancel</button>
+      <button class="btn btn-primary" id="save-settings-btn">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Folder browser modal ───────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="folder-browser-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Select Vault Folder</h3>
+      <button class="modal-close" id="close-folder-browser">✕</button>
+    </div>
+    <div class="folder-browser-bar">
+      <button class="btn btn-ghost btn-sm" id="folder-up-btn">↑ Up</button>
+      <div class="folder-browser-path" id="folder-browser-path"></div>
+    </div>
+    <div class="folder-browser-list" id="folder-browser-list">
+      <div style="padding:1rem;color:var(--text2);text-align:center">Loading…</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="cancel-folder-browser">Cancel</button>
+      <button class="btn btn-primary" id="select-folder-btn">Select This Folder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Study config modal ─────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="study-config-modal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3>Start Study Session</h3>
+      <button class="modal-close" id="close-study-config">✕</button>
+    </div>
+
+    <div class="study-config-section">
+      <h4>Sections to study</h4>
+      <div class="section-checklist" id="section-checklist">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <div class="study-config-section">
+      <h4>Filter cards</h4>
+      <div class="filter-row">
+        <label>Card type:</label>
+        <select id="filter-tag" class="btn btn-secondary" style="padding:.4rem .65rem">
+          <option value="all">All tags</option>
+          <option value="definition">Definition</option>
+          <option value="process">Process</option>
+          <option value="scenario">Scenario</option>
+        </select>
+      </div>
+      <div class="toggle-row" style="margin-top:.5rem">
+        <label class="toggle">
+          <input type="checkbox" id="filter-weak">
+          <span class="toggle-slider"></span>
+        </label>
+        <span>Focus on weak areas (most-missed cards first)</span>
+      </div>
+      <div class="toggle-row" style="margin-top:.5rem">
+        <label class="toggle">
+          <input type="checkbox" id="filter-struggle">
+          <span class="toggle-slider"></span>
+        </label>
+        <span>Struggle mode — only cards you've missed or lapsed</span>
+      </div>
+    </div>
+
+    <div class="study-config-section">
+      <h4>Duration</h4>
+      <div class="duration-pills">
+        <button class="duration-pill" data-mins="5">5 min</button>
+        <button class="duration-pill active" data-mins="15">15 min</button>
+        <button class="duration-pill" data-mins="30">30 min</button>
+        <button class="duration-pill" data-mins="60">60 min</button>
+        <input class="duration-custom" type="number" id="duration-custom" placeholder="Custom" min="1" max="180">
+      </div>
+      <input type="hidden" id="duration-val" value="15">
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="close-study-config-footer">Cancel</button>
+      <button class="btn btn-primary" id="start-session-btn">▶ Start Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Source view modal ──────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="source-modal">
+  <div class="modal-box wide">
+    <div class="modal-header">
+      <h3>Source Note</h3>
+      <button class="modal-close" id="close-source">✕</button>
+    </div>
+    <pre class="source-content" id="source-content">Loading…</pre>
+  </div>
+</div>
+
+<!-- ── Toast container ───────────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<script>
+  // Wire up footer cancel buttons (duplicates of header close buttons)
+  document.getElementById('close-settings-footer')?.addEventListener('click', () =>
+    document.getElementById('settings-modal').classList.add('hidden'));
+  document.getElementById('close-study-config-footer')?.addEventListener('click', () =>
+    document.getElementById('study-config-modal').classList.add('hidden'));
+
+  // Show mobile menu button on small screens
+  if (window.innerWidth <= 600) {
+    document.getElementById('menu-btn').style.display = 'flex';
+  }
+</script>
+<script src="/static/app.js"></script>
+</body>
+</html>
