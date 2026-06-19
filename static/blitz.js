@@ -166,7 +166,11 @@ function blitzNextCard() {
   B.activeBubbles = [];
 
   const qEl = document.getElementById('blitz-question');
-  if (qEl) qEl.textContent = card.front.replace(/\{blank\}/g, '___');
+  if (qEl) {
+    const qText = card.front.replace(/\{blank\}/g, '___');
+    qEl.textContent = qText;
+    qEl.style.fontSize = gameFontSize(qText);
+  }
 
   // Speed: 7000ms → 3500ms as time runs out
   const elapsed = 60 - B.timeLeft;
@@ -196,7 +200,7 @@ function blitzSpawnBubble(text, isCorrect, duration) {
 
   const arenaW = arena.offsetWidth || 400;
   const arenaH = arena.offsetHeight || 300;
-  const bW = Math.min(200, arenaW * 0.45);
+  const bW = Math.min(280, arenaW * 0.65);
 
   const goRight = Math.random() > 0.5;
   const startX = goRight ? -(bW + 10) : arenaW + 10;
