@@ -168,9 +168,9 @@ function blitzNextCard() {
   const qEl = document.getElementById('blitz-question');
   if (qEl) qEl.textContent = card.front.replace(/\{blank\}/g, '___');
 
-  // Speed: 4500ms → 2200ms as time runs out
+  // Speed: 7000ms → 4000ms as time runs out
   const elapsed = 60 - B.timeLeft;
-  const speed = Math.max(2200, 4500 - elapsed * 38);
+  const speed = Math.max(4000, 7000 - elapsed * 50);
 
   const options = card.options.map((text, i) => ({ text, isCorrect: i === card.correct_index }));
   const shuffled = [...options].sort(() => Math.random() - 0.5);

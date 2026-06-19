@@ -176,9 +176,17 @@
       <input type="hidden" id="duration-val" value="15">
     </div>
 
+    <div class="study-config-section">
+      <h4>Quick Games</h4>
+      <div class="game-mode-pills">
+        <button class="btn-match" id="start-match-btn">🃏 Match</button>
+        <button class="btn-sprint" id="start-sprint-btn">🏃 Sprint</button>
+        <button class="btn-blitz" id="start-blitz-btn">⚡ Blitz</button>
+      </div>
+    </div>
+
     <div class="modal-footer">
       <button class="btn btn-secondary" id="close-study-config-footer">Cancel</button>
-      <button class="btn btn-blitz" id="start-blitz-btn">⚡ Blitz Mode</button>
       <button class="btn btn-primary" id="start-session-btn">▶ Start Session</button>
     </div>
   </div>
@@ -198,6 +206,12 @@
 <!-- ── Blitz overlay ──────────────────────────────────────────────────── -->
 <div id="blitz-overlay" class="hidden"></div>
 
+<!-- ── Match overlay ─────────────────────────────────────────────────── -->
+<div id="match-overlay" class="hidden"></div>
+
+<!-- ── Sprint overlay ────────────────────────────────────────────────── -->
+<div id="sprint-overlay" class="hidden"></div>
+
 <!-- ── Toast container ───────────────────────────────────────────────── -->
 <div id="toast-container"></div>
 
@@ -215,6 +229,7 @@
 </script>
 <script src="/static/gamification.js"></script>
 <script src="/static/blitz.js"></script>
+<script src="/static/games.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

@@ -260,6 +260,8 @@ async function showSectionView() {
           <button class="btn btn-secondary" id="view-source-btn">View Source</button>
           <button class="btn btn-primary" id="generate-btn">Generate Cards</button>
           <button class="btn btn-success" id="study-btn">Study</button>
+          <button class="btn-match" id="section-match-btn">🃏 Match</button>
+          <button class="btn-sprint" id="section-sprint-btn">🏃 Sprint</button>
           <button class="btn-blitz" id="section-blitz-btn">⚡ Blitz</button>
         </div>
       </div>
@@ -272,6 +274,8 @@ async function showSectionView() {
   document.getElementById('study-btn').addEventListener('click', () => openStudyConfig([S.activeSection]));
   document.getElementById('view-source-btn').addEventListener('click', () => openSourceModal());
   document.getElementById('section-blitz-btn').addEventListener('click', startBlitzSection);
+  document.getElementById('section-match-btn').addEventListener('click', startMatchSection);
+  document.getElementById('section-sprint-btn').addEventListener('click', startSprintSection);
 
   try {
     S.currentCards = await api(`/api/cards?path=${encodeURIComponent(chapterPath)}&section_slug=${encodeURIComponent(sectionSlug)}`);
@@ -1640,6 +1644,8 @@ async function init() {
   );
   document.getElementById('start-session-btn').addEventListener('click', startStudySession);
   document.getElementById('start-blitz-btn').addEventListener('click', startBlitzFromConfig);
+  document.getElementById('start-match-btn').addEventListener('click', startMatchFromConfig);
+  document.getElementById('start-sprint-btn').addEventListener('click', startSprintFromConfig);
 
   // Source modal
   document.getElementById('close-source').addEventListener('click', () =>
