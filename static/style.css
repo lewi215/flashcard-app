@@ -1297,6 +1297,37 @@ a:hover { text-decoration: underline; }
 }
 .blitz-quit:hover { color: var(--error); background: var(--error-dim); }
 
+.blitz-slow-btn {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg3);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  padding: .3rem .55rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: background .15s;
+}
+.blitz-slow-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform-origin: left;
+  transform: scaleX(0);
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+}
+.blitz-slow-btn.active::after {
+  animation: slow-drain 3s linear forwards;
+}
+@keyframes slow-drain {
+  from { transform: scaleX(1); opacity: .35; }
+  to   { transform: scaleX(0); opacity: .35; }
+}
+
 .blitz-question-wrap {
   padding: 1rem 1.25rem;
   flex-shrink: 0;
@@ -1334,21 +1365,6 @@ a:hover { text-decoration: underline; }
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-.blitz-arena.blitz-slo-mo::after {
-  content: '🐢 SLO-MO';
-  position: absolute;
-  bottom: .6rem;
-  right: .75rem;
-  font-size: .7rem;
-  font-weight: 700;
-  color: var(--accent);
-  background: var(--accent-dim);
-  padding: .2rem .6rem;
-  border-radius: 999px;
-  pointer-events: none;
-  opacity: .9;
-}
-
 .blitz-bubble {
   position: absolute;
   background: var(--card-bg);

@@ -14,6 +14,7 @@ const B = {
   activeBubbles: [],
   xpEarned: 0,
   timeScale: 1.0,
+  slowTimeout: null,
 };
 
 async function startBlitzSection() {
@@ -62,6 +63,7 @@ function startBlitzMode(cards) {
     activeBubbles: [],
     xpEarned: 0,
     timeScale: 1.0,
+    slowTimeout: null,
   });
   clearInterval(B.timerInterval);
 
@@ -77,6 +79,7 @@ function startBlitzMode(cards) {
           <div class="blitz-score-label">pts</div>
         </div>
         <div class="blitz-timer" id="blitz-timer">1:00</div>
+        <button class="blitz-slow-btn" id="blitz-slow-btn" title="Slow motion">🐢</button>
         <button class="blitz-quit" id="blitz-quit" title="Quit">✕</button>
       </div>
       <div class="blitz-question-wrap">
@@ -89,21 +92,17 @@ function startBlitzMode(cards) {
     if (confirm('Quit Blitz Mode?')) blitzEnd(true);
   });
 
-  // Hold on the arena background → slow motion; release → normal speed
-  const arenaEl = document.getElementById('blitz-arena');
-  arenaEl.addEventListener('pointerdown', (e) => {
-    if (e.target.classList.contains('blitz-bubble')) return;
-    e.preventDefault(); // suppress long-press copy/callout on mobile
+  // Slow-motion button: tap to slow for 3s, tap again to reset timer
+  const slowBtn = document.getElementById('blitz-slow-btn');
+  slowBtn.addEventListener('click', () => {
+    clearTimeout(B.slowTimeout);
     B.timeScale = 0.15;
-    arenaEl.classList.add('blitz-slo-mo');
+    slowBtn.classList.add('active');
+    B.slowTimeout = setTimeout(() => {
+      B.timeScale = 1.0;
+      slowBtn.classList.remove('active');
+    }, 3000);
   });
-  arenaEl.addEventListener('contextmenu', (e) => e.preventDefault());
-  const endSloMo = () => {
-    B.timeScale = 1.0;
-    arenaEl.classList.remove('blitz-slo-mo');
-  };
-  overlay.addEventListener('pointerup', endSloMo);
-  overlay.addEventListener('pointercancel', endSloMo);
 
   blitzUpdateTopbar();
   blitzCountdown();
@@ -357,6 +356,7 @@ function blitzMiss() {
 
 function blitzEnd(quit) {
   clearInterval(B.timerInterval);
+  clearTimeout(B.slowTimeout);
   B.timeScale = 1.0;
   B.activeBubbles.forEach(b => { b.done = true; b.el?.remove(); });
 
