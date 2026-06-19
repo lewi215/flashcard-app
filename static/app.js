@@ -269,6 +269,8 @@ async function showSectionView() {
           <button class="btn-gravity" id="section-gravity-btn">⬇ Gravity</button>
           <button class="btn-typeit" id="section-typeit-btn">⌨ Type It</button>
           <button class="btn-sudden" id="section-sudden-btn">💀 Sudden</button>
+          <button class="btn-monty" id="section-monty-btn">🎯 Monty</button>
+          <button class="btn-learn" id="section-learn-btn">📖 Learn</button>
         </div>
       </div>
       <div id="cards-area">
@@ -286,6 +288,8 @@ async function showSectionView() {
   document.getElementById('section-gravity-btn').addEventListener('click', startGravitySection);
   document.getElementById('section-typeit-btn').addEventListener('click', startTypeItSection);
   document.getElementById('section-sudden-btn').addEventListener('click', startSuddenDeathSection);
+  document.getElementById('section-monty-btn').addEventListener('click', startMontySection);
+  document.getElementById('section-learn-btn').addEventListener('click', startLearnSection);
 
   try {
     S.currentCards = await api(`/api/cards?path=${encodeURIComponent(chapterPath)}&section_slug=${encodeURIComponent(sectionSlug)}`);
@@ -1660,6 +1664,8 @@ async function init() {
   document.getElementById('start-gravity-btn').addEventListener('click', startGravityFromConfig);
   document.getElementById('start-typeit-btn').addEventListener('click', startTypeItFromConfig);
   document.getElementById('start-sudden-btn').addEventListener('click', startSuddenDeathFromConfig);
+  document.getElementById('start-monty-btn').addEventListener('click', startMontyFromConfig);
+  document.getElementById('start-learn-btn').addEventListener('click', startLearnFromConfig);
 
   // Source modal
   document.getElementById('close-source').addEventListener('click', () =>

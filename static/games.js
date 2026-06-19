@@ -1002,14 +1002,427 @@ function sdGameOver() {
   }, 500);
 }
 
+// ── Three Monty ────────────────────────────────────────────────────────
+// Phase 1 – Find: tap tiles until you hit the correct answer.
+// Phase 2 – Shuffle: cups flip face-down and swap around.
+// Phase 3 – Pick: select the cup you tracked.
+const TM = {
+  originalCards: [],
+  cards: [],
+  cardIndex: 0,
+  maxCards: 10,
+  score: 0,
+  xpEarned: 0,
+  startTime: 0,
+  options: [],   // [{text, isCorrect}] indexed by cup id 0-2
+  slots: [],     // slots[cupId] = current visual slot (0,1,2)
+  correctCup: 0,
+  phase: 'find', // 'find' | 'shuffle' | 'pick' | 'done'
+};
+
+async function startMontySection() {
+  if (!S.activeSection) return;
+  const { chapterPath, sectionSlug } = S.activeSection;
+  try {
+    const data = await api(`/api/cards?path=${encodeURIComponent(chapterPath)}&section_slug=${encodeURIComponent(sectionSlug)}`);
+    startMontyMode([...(data.generated || []), ...(data.user_created || [])]);
+  } catch (e) { toast('Could not load cards: ' + e.message, 'error'); }
+}
+
+async function startMontyFromConfig() {
+  const selections = getStudySelections();
+  if (!selections.length) { toast('Select at least one section', 'error'); return; }
+  document.getElementById('study-config-modal').classList.add('hidden');
+  const all = [];
+  for (const sel of selections) {
+    try {
+      const data = await api(`/api/cards?path=${encodeURIComponent(sel.chapterPath)}&section_slug=${encodeURIComponent(sel.sectionSlug)}`);
+      all.push(...(data.generated || []), ...(data.user_created || []));
+    } catch (_) {}
+  }
+  startMontyMode(all);
+}
+
+function startMontyMode(cards) {
+  const mc = cards.filter(c => c.type === 'multiple_choice' && Array.isArray(c.options) && c.options.length >= 3);
+  if (!mc.length) { toast('Three Monty needs multiple choice cards with 3+ options.', 'info'); return; }
+
+  Object.assign(TM, {
+    originalCards: cards,
+    cards: [...mc].sort(() => Math.random() - 0.5),
+    cardIndex: 0, maxCards: Math.min(mc.length, 10),
+    score: 0, xpEarned: 0, startTime: Date.now(), phase: 'find',
+  });
+
+  const overlay = document.getElementById('monty-overlay');
+  overlay.classList.remove('hidden');
+  overlay.innerHTML = `
+    <div class="monty-wrap">
+      <div class="monty-topbar">
+        <button class="game-quit" id="monty-quit">✕</button>
+        <div class="monty-title">🎯 Three Monty</div>
+        <div class="monty-score-wrap"><span id="monty-score">0</span><span style="font-size:.7rem;opacity:.7;margin-left:2px">pts</span></div>
+      </div>
+      <div class="monty-question" id="monty-question"></div>
+      <div class="monty-arena" id="monty-arena"></div>
+      <div class="monty-status" id="monty-status">Tap the correct answer</div>
+    </div>`;
+
+  document.getElementById('monty-quit').addEventListener('click', () => {
+    if (confirm('Quit Three Monty?')) document.getElementById('monty-overlay').classList.add('hidden');
+  });
+
+  montyNextCard();
+}
+
+function montyDelay(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+function montyCupW() {
+  const arena = document.getElementById('monty-arena');
+  const aw = (arena && arena.offsetWidth) || 320;
+  return Math.floor((aw - 40) / 3);
+}
+function montyCupX(slot, w) { return 12 + slot * (w + 8); }
+
+function montyNextCard() {
+  if (TM.cardIndex >= TM.maxCards) { montyEnd(); return; }
+  const card = TM.cards[TM.cardIndex++];
+  TM.phase = 'find';
+
+  const qEl = document.getElementById('monty-question');
+  if (qEl) { const t = card.front.replace(/\{blank\}/g, '___'); qEl.textContent = t; qEl.style.fontSize = gameFontSize(t); }
+
+  const correct = card.options[card.correct_index];
+  const decoys = card.options.filter((_, i) => i !== card.correct_index).sort(() => Math.random() - 0.5).slice(0, 2);
+  const opts = [
+    { text: correct, isCorrect: true },
+    { text: decoys[0] || '—', isCorrect: false },
+    { text: decoys[1] || decoys[0] || '—', isCorrect: false },
+  ].sort(() => Math.random() - 0.5);
+
+  TM.options = opts;
+  TM.slots = [0, 1, 2];
+  TM.correctCup = opts.findIndex(o => o.isCorrect);
+
+  const arena = document.getElementById('monty-arena');
+  if (!arena) return;
+  const w = montyCupW();
+  arena.innerHTML = opts.map((opt, i) => `
+    <button class="monty-cup" id="monty-cup-${i}" style="width:${w}px;left:${montyCupX(TM.slots[i], w)}px">
+      <span class="monty-cup-face" style="font-size:${gameFontSize(opt.text)}">${esc(opt.text)}</span>
+    </button>`).join('');
+
+  opts.forEach((opt, i) => {
+    document.getElementById(`monty-cup-${i}`).addEventListener('click', () => montyFindClick(i, opt.isCorrect));
+  });
+  document.getElementById('monty-status').textContent = `Round ${TM.cardIndex} of ${TM.maxCards} — Tap the correct answer`;
+}
+
+function montyFindClick(cupId, isCorrect) {
+  if (TM.phase !== 'find') return;
+  const el = document.getElementById(`monty-cup-${cupId}`);
+  if (!el) return;
+  if (isCorrect) {
+    el.classList.add('monty-correct');
+    document.getElementById('monty-status').textContent = '✓ Got it!';
+    TM.score += 10; TM.xpEarned += 10;
+    const sc = document.getElementById('monty-score'); if (sc) sc.textContent = TM.score;
+    setTimeout(() => montyStartShuffle(), 700);
+  } else {
+    el.classList.add('monty-wrong');
+    setTimeout(() => el.classList.remove('monty-wrong'), 400);
+  }
+}
+
+async function montyStartShuffle() {
+  TM.phase = 'shuffle';
+  document.getElementById('monty-status').textContent = 'Track the correct cup…';
+  const w = montyCupW();
+
+  // Flip all cups face-down
+  for (let i = 0; i < 3; i++) {
+    const el = document.getElementById(`monty-cup-${i}`);
+    if (el) el.style.transform = 'scaleX(0)';
+  }
+  await montyDelay(220);
+  for (let i = 0; i < 3; i++) {
+    const el = document.getElementById(`monty-cup-${i}`);
+    if (!el) continue;
+    const face = el.querySelector('.monty-cup-face');
+    if (face) { face.textContent = '?'; face.style.fontSize = '1.3rem'; }
+    el.classList.add('monty-face-down');
+    el.classList.remove('monty-correct');
+    el.style.transform = '';
+  }
+  await montyDelay(280);
+
+  // Shuffle: 5-7 random pair swaps
+  const numSwaps = 5 + Math.floor(Math.random() * 3);
+  for (let s = 0; s < numSwaps; s++) {
+    const a = Math.floor(Math.random() * 3);
+    let b; do { b = Math.floor(Math.random() * 3); } while (b === a);
+    [TM.slots[a], TM.slots[b]] = [TM.slots[b], TM.slots[a]];
+    const elA = document.getElementById(`monty-cup-${a}`);
+    const elB = document.getElementById(`monty-cup-${b}`);
+    if (elA) elA.style.left = montyCupX(TM.slots[a], w) + 'px';
+    if (elB) elB.style.left = montyCupX(TM.slots[b], w) + 'px';
+    await montyDelay(560);
+  }
+
+  await montyDelay(350);
+  TM.phase = 'pick';
+  document.getElementById('monty-status').textContent = 'Which cup has the answer?';
+
+  TM.options.forEach((_, i) => {
+    const el = document.getElementById(`monty-cup-${i}`);
+    if (!el) return;
+    const fresh = el.cloneNode(true);
+    el.parentNode.replaceChild(fresh, el);
+    fresh.addEventListener('click', () => montyPickClick(i, w));
+  });
+}
+
+async function montyPickClick(cupId, w) {
+  if (TM.phase !== 'pick') return;
+  TM.phase = 'done';
+  const isCorrect = TM.options[cupId].isCorrect;
+  const picked = document.getElementById(`monty-cup-${cupId}`);
+
+  // Flip picked cup
+  if (picked) picked.style.transform = 'scaleX(0)';
+  await montyDelay(220);
+  if (picked) {
+    const face = picked.querySelector('.monty-cup-face');
+    if (face) { face.textContent = TM.options[cupId].text; face.style.fontSize = gameFontSize(TM.options[cupId].text); }
+    picked.classList.remove('monty-face-down');
+    picked.style.transform = '';
+  }
+  await montyDelay(280);
+
+  if (isCorrect) {
+    if (picked) picked.classList.add('monty-correct');
+    TM.score += 20; TM.xpEarned += 20;
+    const sc = document.getElementById('monty-score'); if (sc) sc.textContent = TM.score;
+    document.getElementById('monty-status').textContent = '🎯 You tracked it!';
+    await montyDelay(1200);
+    montyNextCard();
+  } else {
+    if (picked) picked.classList.add('monty-wrong');
+    document.getElementById('monty-status').textContent = '✗ Missed — here it was!';
+    await montyDelay(500);
+    const correctEl = document.getElementById(`monty-cup-${TM.correctCup}`);
+    if (correctEl) {
+      correctEl.style.transform = 'scaleX(0)';
+      await montyDelay(220);
+      const face = correctEl.querySelector('.monty-cup-face');
+      if (face) { face.textContent = TM.options[TM.correctCup].text; face.style.fontSize = gameFontSize(TM.options[TM.correctCup].text); }
+      correctEl.classList.remove('monty-face-down');
+      correctEl.style.transform = '';
+      await montyDelay(250);
+      correctEl.classList.add('monty-correct');
+    }
+    await montyDelay(1500);
+    montyNextCard();
+  }
+}
+
+function montyEnd() {
+  const overlay = document.getElementById('monty-overlay');
+  const gsResult = gsEarnXP(TM.xpEarned);
+  renderGamBar();
+  if (gsResult.leveledUp) setTimeout(() => showLevelUpToast(gsResult.newLevel), 600);
+  const { pct, level } = gsLevelProgress();
+  const elapsed = Math.round((Date.now() - TM.startTime) / 1000);
+  const timeStr = elapsed < 60 ? `${elapsed}s` : `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`;
+
+  overlay.innerHTML = `
+    <div class="game-end-wrap">
+      <div class="game-end-title">🎯 Three Monty</div>
+      <div class="sprint-end-score">${TM.score}<span class="sprint-end-total"> pts</span></div>
+      <div class="game-end-stats">
+        <div class="game-end-stat"><div class="game-end-num">${TM.cardIndex}</div><div class="game-end-label">Rounds</div></div>
+        <div class="game-end-stat"><div class="game-end-num">${timeStr}</div><div class="game-end-label">Time</div></div>
+        <div class="game-end-stat"><div class="game-end-num" style="color:var(--accent)">+${TM.xpEarned}</div><div class="game-end-label">XP</div></div>
+      </div>
+      <div class="blitz-end-xp-section">
+        <div class="blitz-end-xp-label">Level ${level} progress</div>
+        <div class="blitz-xp-bar-wrap"><div class="blitz-xp-bar" id="tm-xp-bar" style="width:0%"></div></div>
+      </div>
+      ${gsResult.leveledUp ? `<div class="blitz-levelup-banner">⬆ Level Up! Now Level ${gsResult.newLevel}</div>` : ''}
+      <div class="blitz-end-actions">
+        <button class="btn btn-secondary" id="tm-home">← Back</button>
+        <button class="btn btn-monty" id="tm-again">🎯 Play Again</button>
+      </div>
+    </div>`;
+
+  setTimeout(() => { const b = document.getElementById('tm-xp-bar'); if (b) b.style.width = pct + '%'; }, 300);
+  document.getElementById('tm-home').addEventListener('click', () => overlay.classList.add('hidden'));
+  document.getElementById('tm-again').addEventListener('click', () => startMontyMode(TM.originalCards));
+}
+
+// ── Learn It ────────────────────────────────────────────────────────────
+// Show question → tap to reveal answer → rate "Got it" or "Still learning".
+// Missed cards loop back until you've mastered every card.
+const LN = {
+  originalCards: [],
+  queue: [],
+  againCards: [],
+  card: null,
+  mastered: 0,
+  total: 0,
+  xpEarned: 0,
+  startTime: 0,
+};
+
+async function startLearnSection() {
+  if (!S.activeSection) return;
+  const { chapterPath, sectionSlug } = S.activeSection;
+  try {
+    const data = await api(`/api/cards?path=${encodeURIComponent(chapterPath)}&section_slug=${encodeURIComponent(sectionSlug)}`);
+    startLearnMode([...(data.generated || []), ...(data.user_created || [])]);
+  } catch (e) { toast('Could not load cards: ' + e.message, 'error'); }
+}
+
+async function startLearnFromConfig() {
+  const selections = getStudySelections();
+  if (!selections.length) { toast('Select at least one section', 'error'); return; }
+  document.getElementById('study-config-modal').classList.add('hidden');
+  const all = [];
+  for (const sel of selections) {
+    try {
+      const data = await api(`/api/cards?path=${encodeURIComponent(sel.chapterPath)}&section_slug=${encodeURIComponent(sel.sectionSlug)}`);
+      all.push(...(data.generated || []), ...(data.user_created || []));
+    } catch (_) {}
+  }
+  startLearnMode(all);
+}
+
+function startLearnMode(cards) {
+  const usable = cards.filter(c => c.front && (c.back || (Array.isArray(c.options) && c.options.length)));
+  if (!usable.length) { toast('No cards available to study.', 'info'); return; }
+
+  const chosen = [...usable].sort(() => Math.random() - 0.5).slice(0, 15);
+  Object.assign(LN, {
+    originalCards: cards,
+    queue: chosen, againCards: [], card: null,
+    mastered: 0, total: chosen.length, xpEarned: 0, startTime: Date.now(),
+  });
+
+  const overlay = document.getElementById('learn-overlay');
+  overlay.classList.remove('hidden');
+  overlay.innerHTML = `
+    <div class="learn-wrap">
+      <div class="learn-topbar">
+        <button class="game-quit" id="learn-quit">✕</button>
+        <div class="learn-title">📖 Learn It</div>
+        <div class="learn-counter" id="learn-counter">0 / ${LN.total}</div>
+      </div>
+      <div class="learn-prog-bar-wrap"><div class="learn-prog-bar" id="learn-bar" style="width:0%"></div></div>
+      <div class="learn-card-area" id="learn-card-area"></div>
+    </div>`;
+
+  document.getElementById('learn-quit').addEventListener('click', () => {
+    if (confirm('Quit Learn It?')) document.getElementById('learn-overlay').classList.add('hidden');
+  });
+
+  learnNextCard();
+}
+
+function learnNextCard() {
+  if (LN.queue.length === 0) {
+    if (LN.againCards.length > 0) {
+      LN.queue = [...LN.againCards].sort(() => Math.random() - 0.5);
+      LN.againCards = [];
+    } else { learnEnd(); return; }
+  }
+
+  LN.card = LN.queue.shift();
+  const answer = LN.card.type === 'multiple_choice'
+    ? (LN.card.options || [])[LN.card.correct_index]
+    : LN.card.back;
+
+  const done = LN.mastered;
+  const progress = Math.round((done / LN.total) * 100);
+  const counterEl = document.getElementById('learn-counter');
+  if (counterEl) counterEl.textContent = `${done} / ${LN.total}`;
+  const barEl = document.getElementById('learn-bar');
+  if (barEl) barEl.style.width = progress + '%';
+
+  const area = document.getElementById('learn-card-area');
+  if (!area) return;
+  const qText = LN.card.front.replace(/\{blank\}/g, '___');
+  const aText = answer || '';
+
+  area.innerHTML = `
+    <div class="learn-card">
+      <div class="learn-q" style="font-size:${gameFontSize(qText)}">${esc(qText)}</div>
+      <button class="learn-reveal-btn" id="learn-reveal-btn">Tap to reveal ↓</button>
+      <div class="learn-answer-section" id="learn-answer-section" style="display:none">
+        <div class="learn-divider-line"></div>
+        <div class="learn-a" style="font-size:${gameFontSize(aText)}">${esc(aText)}</div>
+        <div class="learn-rate-row">
+          <button class="learn-btn-again" id="learn-again-btn">Still learning ↻</button>
+          <button class="learn-btn-got" id="learn-got-btn">Got it ✓</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('learn-reveal-btn').addEventListener('click', () => {
+    document.getElementById('learn-reveal-btn').style.display = 'none';
+    document.getElementById('learn-answer-section').style.display = 'flex';
+  });
+  document.getElementById('learn-got-btn').addEventListener('click', () => {
+    LN.mastered++; LN.xpEarned += 15; learnNextCard();
+  });
+  document.getElementById('learn-again-btn').addEventListener('click', () => {
+    LN.againCards.push(LN.card); LN.xpEarned += 3; learnNextCard();
+  });
+}
+
+function learnEnd() {
+  const overlay = document.getElementById('learn-overlay');
+  const gsResult = gsEarnXP(LN.xpEarned);
+  renderGamBar();
+  if (gsResult.leveledUp) setTimeout(() => showLevelUpToast(gsResult.newLevel), 600);
+  const { pct, level } = gsLevelProgress();
+  const elapsed = Math.round((Date.now() - LN.startTime) / 1000);
+  const timeStr = elapsed < 60 ? `${elapsed}s` : `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`;
+  const pctM = Math.round((LN.mastered / LN.total) * 100);
+  const stars = pctM === 100 ? '⭐⭐⭐' : pctM >= 70 ? '⭐⭐' : '⭐';
+
+  overlay.innerHTML = `
+    <div class="game-end-wrap">
+      <div style="font-size:2rem;text-align:center">${stars}</div>
+      <div class="game-end-title">📖 Session Complete</div>
+      <div class="game-end-stats">
+        <div class="game-end-stat"><div class="game-end-num">${LN.mastered}/${LN.total}</div><div class="game-end-label">Mastered</div></div>
+        <div class="game-end-stat"><div class="game-end-num">${timeStr}</div><div class="game-end-label">Time</div></div>
+        <div class="game-end-stat"><div class="game-end-num" style="color:var(--accent)">+${LN.xpEarned}</div><div class="game-end-label">XP</div></div>
+      </div>
+      <div class="blitz-end-xp-section">
+        <div class="blitz-end-xp-label">Level ${level} progress</div>
+        <div class="blitz-xp-bar-wrap"><div class="blitz-xp-bar" id="ln-xp-bar" style="width:0%"></div></div>
+      </div>
+      ${gsResult.leveledUp ? `<div class="blitz-levelup-banner">⬆ Level Up! Now Level ${gsResult.newLevel}</div>` : ''}
+      <div class="blitz-end-actions">
+        <button class="btn btn-secondary" id="ln-home">← Back</button>
+        <button class="btn btn-learn" id="ln-again">📖 Study Again</button>
+      </div>
+    </div>`;
+
+  setTimeout(() => { const b = document.getElementById('ln-xp-bar'); if (b) b.style.width = pct + '%'; }, 300);
+  document.getElementById('ln-home').addEventListener('click', () => overlay.classList.add('hidden'));
+  document.getElementById('ln-again').addEventListener('click', () => startLearnMode(LN.originalCards));
+}
+
 // ── Shuffle Mode ───────────────────────────────────────────────────────
 // Picks a random game and launches it.
 function startShuffleSection() {
-  const fns = [startBlitzSection, startMatchSection, startSprintSection, startGravitySection, startTypeItSection, startSuddenDeathSection];
+  const fns = [startBlitzSection, startMatchSection, startSprintSection, startGravitySection, startTypeItSection, startSuddenDeathSection, startMontySection, startLearnSection];
   fns[Math.floor(Math.random() * fns.length)]();
 }
 
 function startShuffleFromConfig() {
-  const fns = [startBlitzFromConfig, startMatchFromConfig, startSprintFromConfig, startGravityFromConfig, startTypeItFromConfig, startSuddenDeathFromConfig];
+  const fns = [startBlitzFromConfig, startMatchFromConfig, startSprintFromConfig, startGravityFromConfig, startTypeItFromConfig, startSuddenDeathFromConfig, startMontyFromConfig, startLearnFromConfig];
   fns[Math.floor(Math.random() * fns.length)]();
 }
