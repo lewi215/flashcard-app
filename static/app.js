@@ -260,6 +260,7 @@ async function showSectionView() {
           <button class="btn btn-secondary" id="view-source-btn">View Source</button>
           <button class="btn btn-primary" id="generate-btn">Generate Cards</button>
           <button class="btn btn-success" id="study-btn">Study</button>
+          <button class="btn-blitz" id="section-blitz-btn">⚡ Blitz</button>
         </div>
       </div>
       <div id="cards-area">
@@ -270,6 +271,7 @@ async function showSectionView() {
   document.getElementById('generate-btn').addEventListener('click', generateCards);
   document.getElementById('study-btn').addEventListener('click', () => openStudyConfig([S.activeSection]));
   document.getElementById('view-source-btn').addEventListener('click', () => openSourceModal());
+  document.getElementById('section-blitz-btn').addEventListener('click', startBlitzSection);
 
   try {
     S.currentCards = await api(`/api/cards?path=${encodeURIComponent(chapterPath)}&section_slug=${encodeURIComponent(sectionSlug)}`);
@@ -1201,15 +1203,24 @@ async function endSession() {
   const summary = S.session.summary();
   S.session = null;
 
-  // Save stats
   try {
     await api('/api/stats', { method: 'POST', body: summary.statsUpdates });
   } catch (_) {}
 
-  renderSummary(summary);
+  const xpEarned =
+    summary.easy.length * 15 +
+    summary.good.length * 10 +
+    summary.hard.length * 5 +
+    summary.again.length * 2;
+
+  const gsResult = gsEarnXP(xpEarned);
+  renderGamBar();
+  if (gsResult.leveledUp) setTimeout(() => showLevelUpToast(gsResult.newLevel), 600);
+
+  renderSummary(summary, xpEarned, gsResult);
 }
 
-function renderSummary(summary) {
+function renderSummary(summary, xpEarned = 0, gsResult = {}) {
   const main = document.getElementById('main');
 
   const againHtml = summary.again.map(r => `
@@ -1232,8 +1243,21 @@ function renderSummary(summary) {
 
   const allEasy = !summary.again.length && !summary.hard.length && !summary.good.length;
 
+  const { level, pct } = gsLevelProgress();
+  const xpPanelHtml = xpEarned > 0 ? `
+    <div class="summary-xp-panel">
+      <div class="summary-xp-earned">+${xpEarned} XP</div>
+      <div class="summary-xp-sub">Level ${level}</div>
+      <div class="summary-xp-bar-wrap">
+        <div class="summary-xp-bar" id="summary-xp-bar" style="width:0%"></div>
+      </div>
+      ${gsResult.leveledUp ? `<div class="summary-levelup-msg">⬆ Level Up! Now Level ${gsResult.newLevel}</div>` : ''}
+      ${GS.streakDays > 1 ? `<div class="summary-streak-msg">🔥 ${GS.streakDays} day streak — keep it up!</div>` : ''}
+    </div>` : '';
+
   main.innerHTML = `
     <div class="summary-view">
+      ${xpPanelHtml}
       <div class="summary-header">
         <h2>Session Complete</h2>
         <p>${summary.total} cards reviewed</p>
@@ -1267,6 +1291,13 @@ function renderSummary(summary) {
         <button class="btn btn-primary" id="study-again-btn">Study Again</button>
       </div>
     </div>`;
+
+  if (xpEarned > 0) {
+    setTimeout(() => {
+      const bar = document.getElementById('summary-xp-bar');
+      if (bar) bar.style.width = pct + '%';
+    }, 250);
+  }
 
   document.getElementById('go-home-btn').addEventListener('click', showWelcome);
   document.getElementById('study-again-btn').addEventListener('click', () => {
@@ -1553,6 +1584,8 @@ function initDurationPills() {
 // ── Bootstrap ─────────────────────────────────────────────────────────
 async function init() {
   loadTheme();
+  gsLoad();
+  renderGamBar();
 
   // Settings modal
   document.getElementById('settings-btn').addEventListener('click', openSettings);
@@ -1606,6 +1639,7 @@ async function init() {
     document.getElementById('study-config-modal').classList.add('hidden')
   );
   document.getElementById('start-session-btn').addEventListener('click', startStudySession);
+  document.getElementById('start-blitz-btn').addEventListener('click', startBlitzFromConfig);
 
   // Source modal
   document.getElementById('close-source').addEventListener('click', () =>

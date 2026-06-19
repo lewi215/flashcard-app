@@ -29,6 +29,7 @@
     <button class="btn-study-all" id="sidebar-study-all">▶ Study All</button>
     <button class="btn-weak-spots" id="sidebar-weak-spots">⚠ Weak Spots</button>
   </div>
+  <div id="gam-bar"></div>
   <div id="vault-tree">
     <div class="tree-loading">Loading vault…</div>
   </div>
@@ -177,6 +178,7 @@
 
     <div class="modal-footer">
       <button class="btn btn-secondary" id="close-study-config-footer">Cancel</button>
+      <button class="btn btn-blitz" id="start-blitz-btn">⚡ Blitz Mode</button>
       <button class="btn btn-primary" id="start-session-btn">▶ Start Session</button>
     </div>
   </div>
@@ -193,6 +195,9 @@
   </div>
 </div>
 
+<!-- ── Blitz overlay ──────────────────────────────────────────────────── -->
+<div id="blitz-overlay" class="hidden"></div>
+
 <!-- ── Toast container ───────────────────────────────────────────────── -->
 <div id="toast-container"></div>
 
@@ -208,6 +213,8 @@
     document.getElementById('menu-btn').style.display = 'flex';
   }
 </script>
+<script src="/static/gamification.js"></script>
+<script src="/static/blitz.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>
