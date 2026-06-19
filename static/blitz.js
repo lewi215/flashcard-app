@@ -177,7 +177,7 @@ function blitzNextCard() {
 
   // Speed: 5500ms → 3000ms as time runs out; longer answers get more time
   const elapsed = 60 - B.timeLeft;
-  const baseSpeed = Math.max(3000, 5500 - elapsed * 42);
+  const baseSpeed = Math.max(3300, 6050 - elapsed * 42);
 
   const options = card.options.map((text, i) => ({ text, isCorrect: i === card.correct_index }));
   const shuffled = [...options].sort(() => Math.random() - 0.5);
@@ -304,12 +304,12 @@ function blitzCorrect(el, bubble) {
 
   blitzUpdateTopbar();
 
-  // After 2s slow-down, kill all bubbles and advance
+  // After 3s slow-down, kill all bubbles and advance
   setTimeout(() => {
     B.activeBubbles.forEach(b => { b.done = true; b.el?.remove(); });
     B.activeBubbles = [];
     blitzNextCard();
-  }, 2000);
+  }, 3000);
 }
 
 function blitzWrong(el, bubble) {
@@ -327,11 +327,11 @@ function blitzWrong(el, bubble) {
     setTimeout(() => blitzEnd(false), 2350);
     return;
   }
-  // Remove the wrong bubble after 2s slow-down
+  // Remove the wrong bubble after 3s slow-down
   setTimeout(() => {
     if (bubble) bubble.done = true;
     if (el.parentNode) el.remove();
-  }, 2000);
+  }, 3000);
 }
 
 function blitzMiss() {
