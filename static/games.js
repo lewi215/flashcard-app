@@ -1,5 +1,17 @@
 'use strict';
 
+// ── Font scaling utility ───────────────────────────────────────────────
+// Returns a font-size value that shrinks as text gets longer so the full
+// answer is always readable within a fixed-width tile or bubble.
+function gameFontSize(text) {
+  const n = (text || '').length;
+  if (n > 100) return '.55rem';
+  if (n > 75)  return '.62rem';
+  if (n > 50)  return '.70rem';
+  if (n > 28)  return '.78rem';
+  return '.88rem';
+}
+
 // ── Match Mode ─────────────────────────────────────────────────────────
 const MATCH = {
   originalCards: [],
@@ -96,6 +108,7 @@ function renderMatchBoard() {
   });
 
   overlay.querySelectorAll('.match-tile').forEach(tile => {
+    tile.style.fontSize = gameFontSize(tile.textContent.trim());
     tile.addEventListener('click', () => matchTileClick(tile));
   });
 }
@@ -288,6 +301,8 @@ function sprintShowCard() {
     </div>`;
 
   area.querySelectorAll('.sprint-opt').forEach(btn => {
+    const optText = btn.querySelector('.sprint-opt-text');
+    if (optText) optText.style.fontSize = gameFontSize(optText.textContent);
     btn.addEventListener('click', () => {
       const correct = btn.dataset.correct === 'true';
       area.querySelectorAll('.sprint-opt').forEach(b => {
@@ -506,6 +521,7 @@ function gravitySpawnFaller(text, isCorrect, duration) {
   const el = document.createElement('button');
   el.className = 'gravity-faller';
   el.textContent = text;
+  el.style.fontSize = gameFontSize(text);
   arena.appendChild(el);
 
   const arenaW = arena.offsetWidth || 360;
@@ -922,6 +938,8 @@ function sdShowCard() {
     </div>`;
 
   area.querySelectorAll('.sprint-opt').forEach(btn => {
+    const optText = btn.querySelector('.sprint-opt-text');
+    if (optText) optText.style.fontSize = gameFontSize(optText.textContent);
     btn.addEventListener('click', () => {
       const correct = btn.dataset.correct === 'true';
       area.querySelectorAll('.sprint-opt').forEach(b => {

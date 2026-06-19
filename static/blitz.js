@@ -190,6 +190,7 @@ function blitzSpawnBubble(text, isCorrect, duration) {
   const el = document.createElement('button');
   el.className = 'blitz-bubble';
   el.textContent = text;
+  el.style.fontSize = gameFontSize(text);
   el.setAttribute('aria-label', text);
   arena.appendChild(el);
 
