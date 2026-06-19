@@ -1372,7 +1372,14 @@ a:hover { text-decoration: underline; }
   will-change: left, top;
 }
 .blitz-bubble:hover { border-color: var(--accent); background: var(--accent-dim); }
-.blitz-bubble-slowed { transform: scale(1.08); box-shadow: 0 0 0 3px var(--accent), var(--shadow-lg); transition: transform .2s, box-shadow .2s; }
+.blitz-bubble-selected {
+  border-color: var(--accent) !important;
+  background: var(--accent-dim) !important;
+  color: var(--accent) !important;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px var(--accent), var(--shadow-lg);
+  transition: transform .15s, box-shadow .15s;
+}
 .blitz-bubble-correct {
   border-color: var(--success) !important;
   background: var(--success-dim) !important;

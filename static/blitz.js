@@ -13,8 +13,7 @@ const B = {
   cardAnswered: false,
   activeBubbles: [],
   xpEarned: 0,
-  timeScale: 1.0,
-  slowTimeout: null,
+  previewBubble: null,
 };
 
 async function startBlitzSection() {
@@ -62,8 +61,7 @@ function startBlitzMode(cards) {
     cardAnswered: false,
     activeBubbles: [],
     xpEarned: 0,
-    timeScale: 1.0,
-    slowTimeout: null,
+    previewBubble: null,
   });
   clearInterval(B.timerInterval);
 
@@ -168,6 +166,7 @@ function blitzNextCard() {
   const arena = document.getElementById('blitz-arena');
   if (arena) arena.innerHTML = '';
   B.activeBubbles = [];
+  B.previewBubble = null;
 
   const qEl = document.getElementById('blitz-question');
   if (qEl) {
@@ -215,20 +214,20 @@ function blitzSpawnBubble(text, isCorrect, duration) {
   const endY = arenaH * (0.08 + Math.random() * 0.72);
   const arcPeak = -(50 + Math.random() * 90);
 
-  const bubble = { el, isCorrect, done: false, clicked: false };
+  // speedFactor on bubble so other bubbles can restore it on deselect
+  const bubble = { el, isCorrect, done: false, clicked: false, previewed: false, speedFactor: 1 };
   B.activeBubbles.push(bubble);
 
   el.style.width = bW + 'px';
   el.style.left = startX + 'px';
   el.style.top = startY + 'px';
 
-  let speedFactor = 1;
   let lastFrameTime = null;
   let elapsed = 0;
 
   function tick(now) {
     if (bubble.done) return;
-    if (lastFrameTime !== null) elapsed += (now - lastFrameTime) * speedFactor;
+    if (lastFrameTime !== null) elapsed += (now - lastFrameTime) * bubble.speedFactor;
     lastFrameTime = now;
 
     const t = Math.min(elapsed / duration, 1);
@@ -253,20 +252,27 @@ function blitzSpawnBubble(text, isCorrect, duration) {
   el.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     if (bubble.done || bubble.clicked || B.cardAnswered) return;
-    bubble.clicked = true;
 
-    // Slow this bubble to 5% speed for 2s then ramp back
-    speedFactor = 0.05;
-    el.classList.add('blitz-bubble-slowed');
-    setTimeout(() => {
-      if (!bubble.done) {
-        speedFactor = 1;
-        el.classList.remove('blitz-bubble-slowed');
+    if (!bubble.previewed) {
+      // First tap: deselect any currently previewed bubble, then select this one
+      if (B.previewBubble && B.previewBubble !== bubble && !B.previewBubble.done) {
+        B.previewBubble.speedFactor = 1;
+        B.previewBubble.el.classList.remove('blitz-bubble-selected');
+        B.previewBubble.previewed = false;
       }
-    }, 2000);
-
-    if (isCorrect) blitzCorrect(el, bubble);
-    else blitzWrong(el, bubble);
+      bubble.previewed = true;
+      bubble.speedFactor = 0.05;
+      B.previewBubble = bubble;
+      el.classList.add('blitz-bubble-selected');
+    } else {
+      // Second tap: confirm the answer
+      bubble.clicked = true;
+      bubble.previewed = false;
+      B.previewBubble = null;
+      el.classList.remove('blitz-bubble-selected');
+      if (isCorrect) blitzCorrect(el, bubble);
+      else blitzWrong(el, bubble);
+    }
   });
 }
 
