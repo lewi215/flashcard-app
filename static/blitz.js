@@ -172,9 +172,9 @@ function blitzNextCard() {
     qEl.style.fontSize = gameFontSize(qText);
   }
 
-  // Speed: 7000ms → 3500ms as time runs out
+  // Speed: 7000ms → 3500ms as time runs out; longer answers get more time
   const elapsed = 60 - B.timeLeft;
-  const speed = Math.max(3500, 7000 - elapsed * 58);
+  const baseSpeed = Math.max(3500, 7000 - elapsed * 58);
 
   const options = card.options.map((text, i) => ({ text, isCorrect: i === card.correct_index }));
   const shuffled = [...options].sort(() => Math.random() - 0.5);
@@ -182,7 +182,9 @@ function blitzNextCard() {
   shuffled.forEach((opt, i) => {
     setTimeout(() => {
       if (B.cardAnswered || B.timeLeft <= 0) return;
-      blitzSpawnBubble(opt.text, opt.isCorrect, speed);
+      const n = opt.text.length;
+      const mult = n > 80 ? 2.0 : n > 50 ? 1.6 : n > 28 ? 1.25 : 1.0;
+      blitzSpawnBubble(opt.text, opt.isCorrect, Math.round(baseSpeed * mult));
     }, i * 420);
   });
 }

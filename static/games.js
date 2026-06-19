@@ -499,9 +499,9 @@ function gravityNextCard() {
   const qEl = document.getElementById('gv-question');
   if (qEl) qEl.textContent = card.front.replace(/\{blank\}/g, '___');
 
-  // Speed: 6000ms → 3500ms as time runs out
+  // Speed: 6000ms → 3500ms as time runs out; longer answers fall slower
   const elapsed = 60 - GV.timeLeft;
-  const speed = Math.max(3500, 6000 - elapsed * 42);
+  const baseSpeed = Math.max(3500, 6000 - elapsed * 42);
 
   const options = card.options.map((text, i) => ({ text, isCorrect: i === card.correct_index }));
   const shuffled = [...options].sort(() => Math.random() - 0.5);
@@ -509,7 +509,9 @@ function gravityNextCard() {
   shuffled.forEach((opt, i) => {
     setTimeout(() => {
       if (GV.cardAnswered || GV.timeLeft <= 0) return;
-      gravitySpawnFaller(opt.text, opt.isCorrect, speed);
+      const n = opt.text.length;
+      const mult = n > 80 ? 2.0 : n > 50 ? 1.6 : n > 28 ? 1.25 : 1.0;
+      gravitySpawnFaller(opt.text, opt.isCorrect, Math.round(baseSpeed * mult));
     }, i * 500);
   });
 }
