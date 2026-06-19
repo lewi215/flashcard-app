@@ -79,7 +79,6 @@ function startBlitzMode(cards) {
           <div class="blitz-score-label">pts</div>
         </div>
         <div class="blitz-timer" id="blitz-timer">1:00</div>
-        <button class="blitz-slow-btn" id="blitz-slow-btn" title="Slow motion">🐢</button>
         <button class="blitz-quit" id="blitz-quit" title="Quit">✕</button>
       </div>
       <div class="blitz-question-wrap">
@@ -90,18 +89,6 @@ function startBlitzMode(cards) {
 
   document.getElementById('blitz-quit').addEventListener('click', () => {
     if (confirm('Quit Blitz Mode?')) blitzEnd(true);
-  });
-
-  // Slow-motion button: tap to slow for 3s, tap again to reset timer
-  const slowBtn = document.getElementById('blitz-slow-btn');
-  slowBtn.addEventListener('click', () => {
-    clearTimeout(B.slowTimeout);
-    B.timeScale = 0.15;
-    slowBtn.classList.add('active');
-    B.slowTimeout = setTimeout(() => {
-      B.timeScale = 1.0;
-      slowBtn.classList.remove('active');
-    }, 3000);
   });
 
   blitzUpdateTopbar();
@@ -261,13 +248,33 @@ function blitzSpawnBubble(text, isCorrect, duration) {
 
   requestAnimationFrame(tick);
 
+  let previewed = false;
+
   el.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     if (bubble.done || B.cardAnswered) return;
-    bubble.done = true;
-    if (isCorrect) blitzCorrect(el);
-    else blitzWrong(el);
+
+    if (!previewed) {
+      // First tap: highlight this bubble and slow everything down for 2s
+      previewed = true;
+      el.classList.add('blitz-bubble-preview');
+      blitzSlowPulse();
+    } else {
+      // Second tap on the same bubble: select it
+      bubble.done = true;
+      el.classList.remove('blitz-bubble-preview');
+      if (isCorrect) blitzCorrect(el);
+      else blitzWrong(el);
+    }
   });
+}
+
+function blitzSlowPulse() {
+  clearTimeout(B.slowTimeout);
+  B.timeScale = 0.15;
+  B.slowTimeout = setTimeout(() => {
+    B.timeScale = 1.0;
+  }, 2000);
 }
 
 function blitzCorrect(el) {

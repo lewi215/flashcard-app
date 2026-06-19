@@ -1297,37 +1297,6 @@ a:hover { text-decoration: underline; }
 }
 .blitz-quit:hover { color: var(--error); background: var(--error-dim); }
 
-.blitz-slow-btn {
-  position: relative;
-  overflow: hidden;
-  background: var(--bg3);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 1.1rem;
-  padding: .3rem .55rem;
-  cursor: pointer;
-  line-height: 1;
-  transition: background .15s;
-}
-.blitz-slow-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--accent);
-  transform-origin: left;
-  transform: scaleX(0);
-  border-radius: inherit;
-  z-index: 0;
-  pointer-events: none;
-}
-.blitz-slow-btn.active::after {
-  animation: slow-drain 3s linear forwards;
-}
-@keyframes slow-drain {
-  from { transform: scaleX(1); opacity: .35; }
-  to   { transform: scaleX(0); opacity: .35; }
-}
-
 .blitz-question-wrap {
   padding: 1rem 1.25rem;
   flex-shrink: 0;
@@ -1387,6 +1356,13 @@ a:hover { text-decoration: underline; }
   will-change: left, top;
 }
 .blitz-bubble:hover { border-color: var(--accent); background: var(--accent-dim); }
+.blitz-bubble-preview {
+  border-color: var(--accent) !important;
+  background: var(--accent-dim) !important;
+  color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-dim), var(--shadow-lg) !important;
+  transform: scale(1.04);
+}
 .blitz-bubble-correct {
   border-color: var(--success) !important;
   background: var(--success-dim) !important;
