@@ -93,9 +93,11 @@ function startBlitzMode(cards) {
   const arenaEl = document.getElementById('blitz-arena');
   arenaEl.addEventListener('pointerdown', (e) => {
     if (e.target.classList.contains('blitz-bubble')) return;
+    e.preventDefault(); // suppress long-press copy/callout on mobile
     B.timeScale = 0.15;
     arenaEl.classList.add('blitz-slo-mo');
-  }, { passive: true });
+  });
+  arenaEl.addEventListener('contextmenu', (e) => e.preventDefault());
   const endSloMo = () => {
     B.timeScale = 1.0;
     arenaEl.classList.remove('blitz-slo-mo');
