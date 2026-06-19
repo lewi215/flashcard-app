@@ -4,7 +4,7 @@
 const B = {
   cards: [],
   cardIndex: 0,
-  lives: 3,
+  lives: 5,
   score: 0,
   combo: 0,
   bestCombo: 0,
@@ -52,7 +52,7 @@ function startBlitzMode(cards) {
   Object.assign(B, {
     cards: [...mcCards].sort(() => Math.random() - 0.5),
     cardIndex: 0,
-    lives: 3,
+    lives: 5,
     score: 0,
     combo: 0,
     bestCombo: 0,
@@ -135,7 +135,7 @@ function blitzUpdateTopbar() {
   const scoreEl = document.getElementById('blitz-score');
 
   if (livesEl) {
-    livesEl.innerHTML = [0, 1, 2].map(i =>
+    livesEl.innerHTML = [0, 1, 2, 3, 4].map(i =>
       `<span class="blitz-heart${i >= B.lives ? ' lost' : ''}">${i < B.lives ? '❤️' : '🖤'}</span>`
     ).join('');
   }
@@ -168,9 +168,9 @@ function blitzNextCard() {
   const qEl = document.getElementById('blitz-question');
   if (qEl) qEl.textContent = card.front.replace(/\{blank\}/g, '___');
 
-  // Speed: 7000ms → 4000ms as time runs out
+  // Speed: 7000ms → 3500ms as time runs out
   const elapsed = 60 - B.timeLeft;
-  const speed = Math.max(4000, 7000 - elapsed * 50);
+  const speed = Math.max(3500, 7000 - elapsed * 58);
 
   const options = card.options.map((text, i) => ({ text, isCorrect: i === card.correct_index }));
   const shuffled = [...options].sort(() => Math.random() - 0.5);
