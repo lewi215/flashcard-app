@@ -260,9 +260,14 @@ async function showSectionView() {
           <button class="btn btn-secondary" id="view-source-btn">View Source</button>
           <button class="btn btn-primary" id="generate-btn">Generate Cards</button>
           <button class="btn btn-success" id="study-btn">Study</button>
+        </div>
+        <div class="section-games">
           <button class="btn-match" id="section-match-btn">🃏 Match</button>
           <button class="btn-sprint" id="section-sprint-btn">🏃 Sprint</button>
           <button class="btn-blitz" id="section-blitz-btn">⚡ Blitz</button>
+          <button class="btn-gravity" id="section-gravity-btn">⬇ Gravity</button>
+          <button class="btn-typeit" id="section-typeit-btn">⌨ Type It</button>
+          <button class="btn-sudden" id="section-sudden-btn">💀 Sudden</button>
         </div>
       </div>
       <div id="cards-area">
@@ -276,6 +281,9 @@ async function showSectionView() {
   document.getElementById('section-blitz-btn').addEventListener('click', startBlitzSection);
   document.getElementById('section-match-btn').addEventListener('click', startMatchSection);
   document.getElementById('section-sprint-btn').addEventListener('click', startSprintSection);
+  document.getElementById('section-gravity-btn').addEventListener('click', startGravitySection);
+  document.getElementById('section-typeit-btn').addEventListener('click', startTypeItSection);
+  document.getElementById('section-sudden-btn').addEventListener('click', startSuddenDeathSection);
 
   try {
     S.currentCards = await api(`/api/cards?path=${encodeURIComponent(chapterPath)}&section_slug=${encodeURIComponent(sectionSlug)}`);
@@ -1646,6 +1654,9 @@ async function init() {
   document.getElementById('start-blitz-btn').addEventListener('click', startBlitzFromConfig);
   document.getElementById('start-match-btn').addEventListener('click', startMatchFromConfig);
   document.getElementById('start-sprint-btn').addEventListener('click', startSprintFromConfig);
+  document.getElementById('start-gravity-btn').addEventListener('click', startGravityFromConfig);
+  document.getElementById('start-typeit-btn').addEventListener('click', startTypeItFromConfig);
+  document.getElementById('start-sudden-btn').addEventListener('click', startSuddenDeathFromConfig);
 
   // Source modal
   document.getElementById('close-source').addEventListener('click', () =>
