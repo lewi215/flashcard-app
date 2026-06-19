@@ -249,18 +249,22 @@ function blitzSpawnBubble(text, isCorrect, duration) {
   requestAnimationFrame(tick);
 
   let previewed = false;
+  let previewedAt = 0;
 
   el.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     if (bubble.done || B.cardAnswered) return;
 
+    const now = Date.now();
+
     if (!previewed) {
-      // First tap: highlight this bubble and slow everything down for 2s
+      // First tap: highlight + slow everything down for 2s
       previewed = true;
+      previewedAt = now;
       el.classList.add('blitz-bubble-preview');
       blitzSlowPulse();
-    } else {
-      // Second tap on the same bubble: select it
+    } else if (now - previewedAt >= 300) {
+      // Second tap (must be at least 300ms after first to prevent accidental double-tap)
       bubble.done = true;
       el.classList.remove('blitz-bubble-preview');
       if (isCorrect) blitzCorrect(el);
@@ -272,8 +276,12 @@ function blitzSpawnBubble(text, isCorrect, duration) {
 function blitzSlowPulse() {
   clearTimeout(B.slowTimeout);
   B.timeScale = 0.15;
+  const arena = document.getElementById('blitz-arena');
+  if (arena) arena.classList.add('blitz-slowed');
   B.slowTimeout = setTimeout(() => {
     B.timeScale = 1.0;
+    const a = document.getElementById('blitz-arena');
+    if (a) a.classList.remove('blitz-slowed');
   }, 2000);
 }
 
