@@ -215,21 +215,23 @@ function blitzSpawnBubble(text, isCorrect, duration) {
   const endY = arenaH * (0.08 + Math.random() * 0.72);
   const arcPeak = -(50 + Math.random() * 90);
 
-  const bubble = { el, isCorrect, done: false };
+  const bubble = { el, isCorrect, done: false, clicked: false };
   B.activeBubbles.push(bubble);
 
   el.style.width = bW + 'px';
   el.style.left = startX + 'px';
   el.style.top = startY + 'px';
 
-  let scaledElapsed = 0;
-  let lastTick = performance.now();
+  let speedFactor = 1;
+  let lastFrameTime = null;
+  let elapsed = 0;
 
   function tick(now) {
     if (bubble.done) return;
-    scaledElapsed += (now - lastTick) * B.timeScale;
-    lastTick = now;
-    const t = Math.min(scaledElapsed / duration, 1);
+    if (lastFrameTime !== null) elapsed += (now - lastFrameTime) * speedFactor;
+    lastFrameTime = now;
+
+    const t = Math.min(elapsed / duration, 1);
     const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
     const x = startX + (endX - startX) * eased;
     const arcY = arcPeak * 4 * eased * (1 - eased);
@@ -248,44 +250,27 @@ function blitzSpawnBubble(text, isCorrect, duration) {
 
   requestAnimationFrame(tick);
 
-  let previewed = false;
-  let previewedAt = 0;
-
   el.addEventListener('pointerdown', (e) => {
     e.preventDefault();
-    if (bubble.done || B.cardAnswered) return;
+    if (bubble.done || bubble.clicked || B.cardAnswered) return;
+    bubble.clicked = true;
 
-    const now = Date.now();
+    // Slow this bubble to 5% speed for 2s then ramp back
+    speedFactor = 0.05;
+    el.classList.add('blitz-bubble-slowed');
+    setTimeout(() => {
+      if (!bubble.done) {
+        speedFactor = 1;
+        el.classList.remove('blitz-bubble-slowed');
+      }
+    }, 2000);
 
-    if (!previewed) {
-      // First tap: highlight + slow everything down for 2s
-      previewed = true;
-      previewedAt = now;
-      el.classList.add('blitz-bubble-preview');
-      blitzSlowPulse();
-    } else if (now - previewedAt >= 300) {
-      // Second tap (must be at least 300ms after first to prevent accidental double-tap)
-      bubble.done = true;
-      el.classList.remove('blitz-bubble-preview');
-      if (isCorrect) blitzCorrect(el);
-      else blitzWrong(el);
-    }
+    if (isCorrect) blitzCorrect(el, bubble);
+    else blitzWrong(el, bubble);
   });
 }
 
-function blitzSlowPulse() {
-  clearTimeout(B.slowTimeout);
-  B.timeScale = 0.15;
-  const arena = document.getElementById('blitz-arena');
-  if (arena) arena.classList.add('blitz-slowed');
-  B.slowTimeout = setTimeout(() => {
-    B.timeScale = 1.0;
-    const a = document.getElementById('blitz-arena');
-    if (a) a.classList.remove('blitz-slowed');
-  }, 2000);
-}
-
-function blitzCorrect(el) {
+function blitzCorrect(el, bubble) {
   B.cardAnswered = true;
   B.combo++;
   if (B.combo > B.bestCombo) B.bestCombo = B.combo;
@@ -313,15 +298,15 @@ function blitzCorrect(el) {
 
   blitzUpdateTopbar();
 
-  // Kill remaining bubbles and advance
+  // After 2s slow-down, kill all bubbles and advance
   setTimeout(() => {
     B.activeBubbles.forEach(b => { b.done = true; b.el?.remove(); });
     B.activeBubbles = [];
     blitzNextCard();
-  }, 450);
+  }, 2000);
 }
 
-function blitzWrong(el) {
+function blitzWrong(el, bubble) {
   B.combo = 0;
   B.lives--;
   el.classList.add('blitz-bubble-wrong');
@@ -333,10 +318,14 @@ function blitzWrong(el) {
   blitzUpdateTopbar();
 
   if (B.lives <= 0) {
-    setTimeout(() => blitzEnd(false), 700);
+    setTimeout(() => blitzEnd(false), 2350);
     return;
   }
-  setTimeout(() => { if (el.parentNode) el.remove(); }, 350);
+  // Remove the wrong bubble after 2s slow-down
+  setTimeout(() => {
+    if (bubble) bubble.done = true;
+    if (el.parentNode) el.remove();
+  }, 2000);
 }
 
 function blitzMiss() {
