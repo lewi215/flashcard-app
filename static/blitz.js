@@ -254,21 +254,14 @@ function blitzSpawnBubble(text, isCorrect, duration) {
     if (bubble.done || bubble.clicked || B.cardAnswered) return;
 
     if (!bubble.previewed) {
-      // First tap: deselect any currently previewed bubble, then select this one
-      if (B.previewBubble && B.previewBubble !== bubble && !B.previewBubble.done) {
-        B.previewBubble.speedFactor = 1;
-        B.previewBubble.el.classList.remove('blitz-bubble-selected');
-        B.previewBubble.previewed = false;
-      }
+      // First tap: slow this bubble and mark it selected
       bubble.previewed = true;
       bubble.speedFactor = 0.05;
-      B.previewBubble = bubble;
       el.classList.add('blitz-bubble-selected');
     } else {
       // Second tap: confirm the answer
       bubble.clicked = true;
       bubble.previewed = false;
-      B.previewBubble = null;
       el.classList.remove('blitz-bubble-selected');
       if (isCorrect) blitzCorrect(el, bubble);
       else blitzWrong(el, bubble);
