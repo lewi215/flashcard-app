@@ -1335,14 +1335,13 @@ a:hover { text-decoration: underline; }
   border: 2px solid var(--border);
   border-radius: 999px;
   padding: .55rem 1.1rem;
-  font-size: .88rem;
-  font-weight: 600;
-  font: inherit;
+  font: 600 .82rem/1.3 inherit;
   color: var(--text);
   cursor: pointer;
-  white-space: nowrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-align: center;
   box-shadow: var(--shadow);
   touch-action: none;
   user-select: none;
@@ -1494,12 +1493,15 @@ a:hover { text-decoration: underline; }
 .btn-shuffle, .btn-match, .btn-sprint, .btn-gravity, .btn-typeit, .btn-sudden {
   border: none;
   border-radius: var(--radius);
-  padding: .55rem .9rem;
-  font: 600 .88rem/1 inherit;
+  padding: .5rem .6rem;
+  font: 600 .78rem/1.2 inherit;
   cursor: pointer;
   transition: filter .15s, transform .1s;
   color: #fff;
-  white-space: nowrap;
+  text-align: center;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow: hidden;
 }
 .btn-shuffle:hover, .btn-match:hover, .btn-sprint:hover,
 .btn-gravity:hover, .btn-typeit:hover, .btn-sudden:hover { filter: brightness(1.1); transform: translateY(-1px); }
@@ -1612,19 +1614,21 @@ a:hover { text-decoration: underline; }
   background: var(--card-bg);
   border: 2px solid var(--border);
   border-radius: var(--radius);
-  padding: .9rem .75rem;
-  font-size: .83rem;
-  font-weight: 500;
+  padding: .75rem .6rem;
   font: inherit;
+  font-size: clamp(.65rem, 2vw, .82rem);
   color: var(--text);
   cursor: pointer;
   text-align: center;
-  line-height: 1.4;
-  min-height: 72px;
+  line-height: 1.35;
+  min-height: 64px;
+  max-height: 110px;
   display: flex;
   align-items: center;
   justify-content: center;
   word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow: hidden;
   transition: border-color .12s, background .12s, transform .12s, opacity .3s;
   box-shadow: var(--shadow);
 }
@@ -1725,7 +1729,7 @@ a:hover { text-decoration: underline; }
 }
 .sprint-correct .sprint-letter { background: var(--success); color: #fff; }
 .sprint-wrong .sprint-letter { background: var(--error); color: #fff; }
-.sprint-opt-text { flex: 1; }
+.sprint-opt-text { flex: 1; overflow-wrap: anywhere; word-break: break-word; }
 .sprint-end-score {
   font-size: 4rem;
   font-weight: 900;
@@ -1751,18 +1755,19 @@ a:hover { text-decoration: underline; }
 
 .gravity-faller {
   position: absolute;
-  border: none;
+  border: 2px solid var(--border);
   border-radius: 999px;
   background: var(--card-bg);
   color: var(--text);
-  font: 600 .9rem/1.2 inherit;
-  padding: .65rem 1rem;
+  font: 600 .82rem/1.3 inherit;
+  padding: .55rem .85rem;
   cursor: pointer;
   box-shadow: var(--shadow-lg);
   transition: background .1s, color .1s, transform .1s;
   text-align: center;
   word-break: break-word;
-  border: 2px solid var(--border);
+  overflow-wrap: anywhere;
+  overflow: hidden;
 }
 .gravity-faller:hover { border-color: var(--accent); background: var(--accent-dim); }
 .gravity-faller.blitz-bubble-correct { background: var(--success-dim); border-color: var(--success); color: var(--success); transform: scale(1.08); }
