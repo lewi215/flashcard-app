@@ -1188,17 +1188,18 @@ a:hover { text-decoration: underline; }
 /* Blitz button */
 .btn-blitz {
   background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-  color: #fff;
-  border-radius: var(--radius-sm);
-  padding: .5rem 1rem;
-  font-weight: 600;
-  font: inherit;
+  box-shadow: 0 2px 8px rgba(245,158,11,.35);
   border: none;
+  border-radius: var(--radius);
+  padding: .55rem .9rem;
+  font: 600 .88rem/1 inherit;
   cursor: pointer;
-  transition: opacity .15s, transform .1s;
+  color: #fff;
+  white-space: nowrap;
+  transition: filter .15s, transform .1s;
 }
-.btn-blitz:hover { opacity: .9; }
-.btn-blitz:active { transform: scale(.97); }
+.btn-blitz:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-blitz:active { filter: brightness(.95); transform: translateY(0); }
 
 /* ── Blitz overlay ────────────────────────────────────────────────── */
 #blitz-overlay {
@@ -1489,46 +1490,36 @@ a:hover { text-decoration: underline; }
 }
 
 /* ── Game mode buttons ────────────────────────────────────────────── */
-.btn-match {
-  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-  color: #fff;
-  border-radius: var(--radius-sm);
-  padding: .5rem 1rem;
-  font-weight: 600;
-  font: inherit;
+/* ── Shared game pill base ──────────────────────────────────────────── */
+.btn-shuffle, .btn-match, .btn-sprint, .btn-gravity, .btn-typeit, .btn-sudden {
   border: none;
+  border-radius: var(--radius);
+  padding: .55rem .9rem;
+  font: 600 .88rem/1 inherit;
   cursor: pointer;
-  transition: opacity .15s, transform .1s;
+  transition: filter .15s, transform .1s;
+  color: #fff;
+  white-space: nowrap;
 }
-.btn-match:hover { opacity: .9; }
-.btn-match:active { transform: scale(.97); }
+.btn-shuffle:hover, .btn-match:hover, .btn-sprint:hover,
+.btn-gravity:hover, .btn-typeit:hover, .btn-sudden:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-shuffle:active, .btn-match:active, .btn-sprint:active,
+.btn-gravity:active, .btn-typeit:active, .btn-sudden:active { filter: brightness(.95); transform: translateY(0); }
 
-.btn-sprint {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #fff;
-  border-radius: var(--radius-sm);
-  padding: .5rem 1rem;
-  font-weight: 600;
-  font: inherit;
-  border: none;
-  cursor: pointer;
-  transition: opacity .15s, transform .1s;
-}
-.btn-sprint:hover { opacity: .9; }
-.btn-sprint:active { transform: scale(.97); }
+.btn-shuffle  { background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%); box-shadow: 0 2px 8px rgba(99,102,241,.35); }
+.btn-match    { background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); box-shadow: 0 2px 8px rgba(139,92,246,.35); }
+.btn-sprint   { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 2px 8px rgba(16,185,129,.35); }
+.btn-gravity  { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 8px rgba(59,130,246,.35); }
+.btn-typeit   { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); box-shadow: 0 2px 8px rgba(244,63,94,.35); }
+.btn-sudden   { background: linear-gradient(135deg, #374151 0%, #111827 100%); box-shadow: 0 2px 8px rgba(0,0,0,.4); }
 
 .game-mode-pills {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: .5rem;
-  flex-wrap: wrap;
 }
-.game-mode-pills .btn-match,
-.game-mode-pills .btn-sprint,
-.game-mode-pills .btn-blitz {
-  flex: 1;
-  min-width: 80px;
-  text-align: center;
-  justify-content: center;
+@media (max-width: 480px) {
+  .game-mode-pills { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ── Shared game overlay base ────────────────────────────────────── */
@@ -1746,45 +1737,6 @@ a:hover { text-decoration: underline; }
 .sprint-end-total { font-size: 2rem; font-weight: 400; color: var(--text2); }
 .sprint-end-pct { font-size: 1rem; font-weight: 700; margin-top: -.5rem; }
 
-/* ── New Game Buttons ─────────────────────────────────────────────── */
-.btn-gravity {
-  flex: 1;
-  padding: .55rem .9rem;
-  border: none;
-  border-radius: var(--radius);
-  font: 600 .88rem/1 inherit;
-  cursor: pointer;
-  transition: filter .15s, transform .1s;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(59,130,246,.35);
-}
-.btn-typeit {
-  flex: 1;
-  padding: .55rem .9rem;
-  border: none;
-  border-radius: var(--radius);
-  font: 600 .88rem/1 inherit;
-  cursor: pointer;
-  transition: filter .15s, transform .1s;
-  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(244,63,94,.35);
-}
-.btn-sudden {
-  flex: 1;
-  padding: .55rem .9rem;
-  border: none;
-  border-radius: var(--radius);
-  font: 600 .88rem/1 inherit;
-  cursor: pointer;
-  transition: filter .15s, transform .1s;
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,.4);
-}
-.btn-gravity:hover,.btn-typeit:hover,.btn-sudden:hover { filter: brightness(1.1); transform: translateY(-1px); }
-.btn-gravity:active,.btn-typeit:active,.btn-sudden:active { filter: brightness(.95); transform: translateY(0); }
 
 /* ── Gravity Overlay ──────────────────────────────────────────────── */
 #gravity-overlay {
@@ -1967,9 +1919,15 @@ a:hover { text-decoration: underline; }
 
 /* ── Section game buttons row ─────────────────────────────────────── */
 .section-games {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: .4rem;
-  flex-wrap: wrap;
-  margin-top: .5rem;
+  margin-top: .6rem;
 }
-.section-games > button { flex: 1; min-width: 70px; }
+@media (max-width: 600px) {
+  .section-games { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 360px) {
+  .section-games { grid-template-columns: repeat(2, 1fr); }
+}
+.section-games > button { width: 100%; text-align: center; justify-content: center; }

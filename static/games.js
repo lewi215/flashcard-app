@@ -981,3 +981,15 @@ function sdGameOver() {
     document.getElementById('sd-again').addEventListener('click', () => startSuddenDeathMode(SD.originalCards));
   }, 500);
 }
+
+// ── Shuffle Mode ───────────────────────────────────────────────────────
+// Picks a random game and launches it.
+function startShuffleSection() {
+  const fns = [startBlitzSection, startMatchSection, startSprintSection, startGravitySection, startTypeItSection, startSuddenDeathSection];
+  fns[Math.floor(Math.random() * fns.length)]();
+}
+
+function startShuffleFromConfig() {
+  const fns = [startBlitzFromConfig, startMatchFromConfig, startSprintFromConfig, startGravityFromConfig, startTypeItFromConfig, startSuddenDeathFromConfig];
+  fns[Math.floor(Math.random() * fns.length)]();
+}
