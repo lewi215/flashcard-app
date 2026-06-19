@@ -13,6 +13,7 @@ const B = {
   cardAnswered: false,
   activeBubbles: [],
   xpEarned: 0,
+  timeScale: 1.0,
 };
 
 async function startBlitzSection() {
@@ -60,6 +61,7 @@ function startBlitzMode(cards) {
     cardAnswered: false,
     activeBubbles: [],
     xpEarned: 0,
+    timeScale: 1.0,
   });
   clearInterval(B.timerInterval);
 
@@ -86,6 +88,20 @@ function startBlitzMode(cards) {
   document.getElementById('blitz-quit').addEventListener('click', () => {
     if (confirm('Quit Blitz Mode?')) blitzEnd(true);
   });
+
+  // Hold on the arena background → slow motion; release → normal speed
+  const arenaEl = document.getElementById('blitz-arena');
+  arenaEl.addEventListener('pointerdown', (e) => {
+    if (e.target.classList.contains('blitz-bubble')) return;
+    B.timeScale = 0.15;
+    arenaEl.classList.add('blitz-slo-mo');
+  }, { passive: true });
+  const endSloMo = () => {
+    B.timeScale = 1.0;
+    arenaEl.classList.remove('blitz-slo-mo');
+  };
+  overlay.addEventListener('pointerup', endSloMo);
+  overlay.addEventListener('pointercancel', endSloMo);
 
   blitzUpdateTopbar();
   blitzCountdown();
@@ -172,9 +188,9 @@ function blitzNextCard() {
     qEl.style.fontSize = gameFontSize(qText);
   }
 
-  // Speed: 7000ms → 3500ms as time runs out; longer answers get more time
+  // Speed: 5500ms → 3000ms as time runs out; longer answers get more time
   const elapsed = 60 - B.timeLeft;
-  const baseSpeed = Math.max(3500, 7000 - elapsed * 58);
+  const baseSpeed = Math.max(3000, 5500 - elapsed * 42);
 
   const options = card.options.map((text, i) => ({ text, isCorrect: i === card.correct_index }));
   const shuffled = [...options].sort(() => Math.random() - 0.5);
@@ -218,12 +234,15 @@ function blitzSpawnBubble(text, isCorrect, duration) {
   el.style.left = startX + 'px';
   el.style.top = startY + 'px';
 
-  const startTime = performance.now();
+  let scaledElapsed = 0;
+  let lastTick = performance.now();
 
   function tick(now) {
     if (bubble.done) return;
-    const t = Math.min((now - startTime) / duration, 1);
-    const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // ease in-out
+    scaledElapsed += (now - lastTick) * B.timeScale;
+    lastTick = now;
+    const t = Math.min(scaledElapsed / duration, 1);
+    const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
     const x = startX + (endX - startX) * eased;
     const arcY = arcPeak * 4 * eased * (1 - eased);
     const y = startY + (endY - startY) * eased + arcY;
@@ -336,6 +355,7 @@ function blitzMiss() {
 
 function blitzEnd(quit) {
   clearInterval(B.timerInterval);
+  B.timeScale = 1.0;
   B.activeBubbles.forEach(b => { b.done = true; b.el?.remove(); });
 
   const overlay = document.getElementById('blitz-overlay');

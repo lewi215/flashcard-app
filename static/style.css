@@ -1332,6 +1332,20 @@ a:hover { text-decoration: underline; }
   touch-action: none;
   user-select: none;
 }
+.blitz-arena.blitz-slo-mo::after {
+  content: '🐢 SLO-MO';
+  position: absolute;
+  bottom: .6rem;
+  right: .75rem;
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: .9;
+}
 
 .blitz-bubble {
   position: absolute;
